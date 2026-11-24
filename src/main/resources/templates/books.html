@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Catalogue - LibraFlow</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div>
+        <a th:href="@{/books}" class="brand">LibraFlow</a>
+        <span class="badge-version" th:text="'v' + ${appVersion}">v1.0.0</span>
+    </div>
+    <div style="display: flex; align-items: center;">
+        <a th:href="@{/books}">Catalogue</a>
+        <a th:href="@{/loans}">Emprunts</a>
+        <a th:href="@{/actuator/health}" target="_blank">Sante</a>
+        <span style="margin-left: 1.5rem; font-size: 0.85rem;" th:text="'Connecte : ' + ${username}"></span>
+        <form th:action="@{/logout}" method="post" style="margin-left: 1rem;">
+            <button type="submit" class="btn btn-sm btn-danger">Deconnexion</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div>Livres au catalogue</div>
+            <div class="stat-value" th:text="${totalBooks}">0</div>
+        </div>
+        <div class="stat-box">
+            <div>Emprunts actifs</div>
+            <div class="stat-value" th:text="${activeLoans}">0</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Rechercher dans le catalogue</h3>
+        <form th:action="@{/books}" method="get" class="form-inline">
+            <div style="flex: 1; min-width: 240px;">
+                <input type="text" name="query" th:value="${query}" placeholder="Titre ou auteur...">
+            </div>
+            <button type="submit" class="btn">Rechercher</button>
+            <a th:href="@{/books}" class="btn" style="background: var(--muted);">Reinitialiser</a>
+        </form>
+    </div>
+
+    <div class="card" sec:authorize="hasRole('ADMIN')">
+        <h3>Ajouter un livre (Administration)</h3>
+        <form th:action="@{/books/add}" method="post" class="form-inline">
+            <div style="flex: 2; min-width: 180px;">
+                <label for="title">Titre</label>
+                <input id="title" name="title" type="text" required>
+            </div>
+            <div style="flex: 2; min-width: 160px;">
+                <label for="author">Auteur</label>
+                <input id="author" name="author" type="text" required>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+                <label for="isbn">ISBN</label>
+                <input id="isbn" name="isbn" type="text" required>
+            </div>
+            <div style="width: 110px;">
+                <label for="totalCopies">Exemplaires</label>
+                <input id="totalCopies" name="totalCopies" type="number" min="1" value="1" required>
+            </div>
+            <button type="submit" class="btn btn-success">Ajouter</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Livres disponibles</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Auteur</th>
+                <th>ISBN</th>
+                <th>Disponibles</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="book : ${books}">
+                <td th:text="${book.title}"></td>
+                <td th:text="${book.author}"></td>
+                <td th:text="${book.isbn}"></td>
+                <td th:text="${book.availableCopies + ' / ' + book.totalCopies}"></td>
+                <td class="actions-cell">
+                    <form th:if="${book.availableCopies > 0}" th:action="@{/loans/borrow}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.id}">
+                        <button type="submit" class="btn btn-sm">Emprunter</button>
+                    </form>
+                    <button th:if="${book.availableCopies == 0}" type="button"
+                            class="btn btn-sm btn-disabled" disabled>Indisponible</button>
+                    <form sec:authorize="hasRole('ADMIN')"
+                          th:action="@{/books/{id}/delete(id=${book.id})}" method="post">
+                        <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(books)}">
+                <td colspan="5" style="text-align: center; color: var(--muted);">Aucun livre trouve.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

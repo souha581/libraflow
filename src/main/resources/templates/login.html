@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - LibraFlow</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="card auth-card">
+    <h2>LibraFlow - Connexion</h2>
+    <p style="color: var(--muted); margin-top: -0.5rem;">Gestion de bibliotheque universitaire</p>
+
+    <div th:if="${param.error}" class="alert alert-error">
+        Identifiants invalides. Veuillez reessayer.
+    </div>
+    <div th:if="${param.logout}" class="alert alert-success">
+        Vous avez ete deconnecte.
+    </div>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+    <form th:action="@{/login}" method="post">
+        <div class="form-group">
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" name="username" type="text" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input id="password" name="password" type="password" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%;">Se connecter</button>
+    </form>
+
+    <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
+        Pas encore de compte ? <a th:href="@{/register}">Creer un compte etudiant</a>
+    </p>
+</div>
+</body>
+</html>

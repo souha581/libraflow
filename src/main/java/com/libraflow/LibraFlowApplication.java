@@ -1,0 +1,15 @@
+package com.libraflow;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * Main entrypoint for the LibraFlow library management application.
+ */
+@SpringBootApplication
+public class LibraFlowApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(LibraFlowApplication.class, args);
+    }
+}

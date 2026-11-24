@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Emprunts - LibraFlow</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div>
+        <a th:href="@{/books}" class="brand">LibraFlow</a>
+        <span class="badge-version" th:text="'v' + ${appVersion}">v1.0.0</span>
+    </div>
+    <div style="display: flex; align-items: center;">
+        <a th:href="@{/books}">Catalogue</a>
+        <a th:href="@{/loans}">Emprunts</a>
+        <a th:href="@{/actuator/health}" target="_blank">Sante</a>
+        <span style="margin-left: 1.5rem; font-size: 0.85rem;" th:text="'Connecte : ' + ${username}"></span>
+        <form th:action="@{/logout}" method="post" style="margin-left: 1rem;">
+            <button type="submit" class="btn btn-sm btn-danger">Deconnexion</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <h3 th:text="${isAdmin} ? 'Tous les emprunts' : 'Mes emprunts'">Emprunts</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Livre</th>
+                <th>Emprunteur</th>
+                <th>Date d'emprunt</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="loan : ${loans}">
+                <td th:text="${loan.book.title}"></td>
+                <td th:text="${loan.user.username}"></td>
+                <td th:text="${#temporals.format(loan.borrowedAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td>
+                    <span th:if="${loan.status.name() == 'ACTIVE'}" class="pill pill-active">ACTIF</span>
+                    <span th:if="${loan.status.name() == 'RETURNED'}" class="pill pill-returned">RETOURNE</span>
+                </td>
+                <td>
+                    <form th:if="${loan.status.name() == 'ACTIVE'}"
+                          th:action="@{/loans/{id}/return(id=${loan.id})}" method="post">
+                        <button type="submit" class="btn btn-sm btn-success">Retourner</button>
+                    </form>
+                    <span th:if="${loan.status.name() == 'RETURNED'}"
+                          style="color: var(--muted); font-size: 0.85rem;"
+                          th:text="${#temporals.format(loan.returnedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(loans)}">
+                <td colspan="5" style="text-align: center; color: var(--muted);">Aucun emprunt enregistre.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

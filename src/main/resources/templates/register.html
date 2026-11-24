@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription - LibraFlow</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="card auth-card">
+    <h2>Creer un compte LibraFlow</h2>
+
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/register}" method="post">
+        <div class="form-group">
+            <label for="fullName">Nom complet</label>
+            <input id="fullName" name="fullName" type="text" required>
+        </div>
+        <div class="form-group">
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" name="username" type="text" required minlength="3">
+        </div>
+        <div class="form-group">
+            <label for="password">Mot de passe (min. 6 caracteres)</label>
+            <input id="password" name="password" type="password" required minlength="6">
+        </div>
+        <button type="submit" class="btn" style="width: 100%;">S'inscrire</button>
+    </form>
+
+    <p style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
+        Deja inscrit ? <a th:href="@{/login}">Se connecter</a>
+    </p>
+</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres-test}:${DB_PORT:5432}/${DB_NAME:libraflow_test}
+    username: ${DB_USER:libraflow_test}
+    password: ${DB_PASSWORD:?DB_PASSWORD must be configured in test environment}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    com.libraflow: INFO

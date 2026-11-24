@@ -1,0 +1,73 @@
+name: Rollback Test Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_image_tag:
+        description: "Tag stable precedent (ex: sha-abc1234 ou 1.0.0)"
+        required: true
+      reason:
+        description: "Motif du rollback (reference fiche d'incident)"
+        required: true
+        default: "Incident en environnement de test"
+
+jobs:
+  rollback-test:
+    name: Execute Rollback & Verify Recovery
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: ${{ vars.TEST_APP_URL || 'http://localhost:8081' }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve stable target image
+        id: target
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          TAG="${{ github.event.inputs.target_image_tag }}"
+          echo "image_ref=ghcr.io/${REPO_LOWER}:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Rollback reason: ${{ github.event.inputs.reason }}"
+
+      - name: Rollback via SSH (when DEPLOY_HOST is configured)
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ vars.DEPLOY_PATH || '~/libraflow' }}
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            DB_PASSWORD="${{ secrets.TEST_DB_PASSWORD }}" \
+            APP_ADMIN_PASSWORD="${{ secrets.TEST_ADMIN_PASSWORD }}" \
+            APP_MEMBER_PASSWORD="${{ secrets.TEST_MEMBER_PASSWORD }}" \
+            bash scripts/rollback.sh "${{ steps.target.outputs.image_ref }}" "${{ steps.target.outputs.version }}"
+
+      - name: Simulate & verify rollback in Docker test stack (when no remote host)
+        if: ${{ secrets.DEPLOY_HOST == '' }}
+        env:
+          TEST_DB_SECRET: ${{ secrets.TEST_DB_PASSWORD }}
+          TEST_ADMIN_SECRET: ${{ secrets.TEST_ADMIN_PASSWORD }}
+          TEST_MEMBER_SECRET: ${{ secrets.TEST_MEMBER_PASSWORD }}
+          APP_SEED_ENABLED: "true"
+        run: |
+          export DB_PASSWORD="${TEST_DB_SECRET:-$(openssl rand -hex 16)}"
+          export APP_ADMIN_PASSWORD="${TEST_ADMIN_SECRET:-$(openssl rand -hex 12)}"
+          export APP_MEMBER_PASSWORD="${TEST_MEMBER_SECRET:-$(openssl rand -hex 12)}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          bash scripts/rollback.sh "${{ steps.target.outputs.image_ref }}" "${{ steps.target.outputs.version }}"
+          docker compose -f docker-compose.test.yml down
+
+      - name: Archive rollback trace
+        if: always() && hashFiles('deployments/history.log') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-trace-${{ steps.target.outputs.version }}
+          path: deployments/history.log
+          retention-days: 30

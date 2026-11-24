@@ -1,0 +1,30 @@
+# Compiled class files & Maven build outputs
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+
+# Environment files & secrets (NEVER commit real secrets)
+.env
+.env.local
+.env.dev
+.env.test
+*.pem
+*.key
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Deployment runtime state
+deployments/*.tmp
